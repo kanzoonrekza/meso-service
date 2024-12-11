@@ -2,13 +2,13 @@ include .env
 export
 
 build:
-	@go build -o internal/main.go
+	@go build -o cmd/main.go
 
 run:
 	@go run main
 
 air:
-	@air internal/main.go
+	@air cmd/main.go
 
 goose:
 	@cmd=$(word 2, $(MAKECMDGOALS)); \
