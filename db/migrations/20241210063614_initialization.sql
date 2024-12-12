@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     title TEXT NOT NULL,
     description TEXT,
     status status NOT NULL DEFAULT 'to do',
-    list_id BIGINT NOT NULL REFERENCES lists(id),
-    tast_id BIGSERIAL NOT NULL REFERENCES tasks(id),
+    parent_list_id BIGINT REFERENCES lists(id),
+    parent_task_id BIGINT REFERENCES tasks(id),
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 -- +goose StatementEnd

@@ -2,10 +2,13 @@ include .env
 export
 
 build:
-	@go build -o cmd/main.go
+	@go build -o . cmd/main.go
 
 run:
-	@go run main
+	@go run cmd/main.go
+
+run-bin:
+	@./main
 
 air:
 	@air cmd/main.go
@@ -40,6 +43,9 @@ goose:
 		*) \
 			echo "❌️ Unknown command: make goose $$cmd"; \
 	esac
+
+sqlc:
+	@sqlc generate
 
 # Catch undefined second make target
 $(wordlist 2, 100, $(MAKECMDGOALS)):
