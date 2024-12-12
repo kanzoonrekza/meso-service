@@ -2,38 +2,36 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"meso/db"
+	"meso/internal/middleware"
+	"meso/internal/services"
+	"net/http"
 	"os"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
 	fmt.Println("☄️☄️☄️")
 
 	ctx := context.Background()
-	conn, err := pgx.Connect(ctx, os.Getenv("DB_URL"))
+	pool, err := pgxpool.New(ctx, os.Getenv("DB_URL"))
 	if err != nil {
 		fmt.Println("Error connecting to database:", err)
 		return
 	}
-	defer conn.Close(context.Background())
+	defer pool.Close()
 
-	queries := db.New(conn)
+	mux := http.NewServeMux()
 
-	tasks, err := queries.GetAllTasks(ctx)
-	if err != nil {
-		fmt.Println("Error getting tasks:", err)
-		return
+	server := http.Server{
+		Addr:    ":8000",
+		Handler: middleware.DBPoolHandler(pool)(mux),
 	}
 
-	jsonData, err := json.Marshal(tasks)
-	if err != nil {
-		fmt.Println("Error marshaling tasks to JSON:", err)
-	}
+	mux.HandleFunc("/status", services.Status)
+	mux.HandleFunc("GET /tasks", services.GetAllTasks)
+	mux.HandleFunc("GET /lists", services.GetAllLists)
 
-	fmt.Println("JSON Output Tasks:", string(jsonData))
-
+	server.ListenAndServe()
 }
