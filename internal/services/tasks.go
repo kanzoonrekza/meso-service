@@ -3,21 +3,12 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"meso/db"
+	"meso/internal/utils"
 	"net/http"
-
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func GetAllTasks(w http.ResponseWriter, r *http.Request) {
-	pool, ok := r.Context().Value("pool").(*pgxpool.Pool)
-	if !ok {
-		http.Error(w, "Database connection not available", http.StatusInternalServerError)
-		return
-	}
-
-	queries := db.New(pool)
-	ctx := r.Context()
+	queries, ctx := utils.GetDBCtx(w, r)
 
 	tasks, err := queries.GetAllTasks(ctx)
 	if err != nil {

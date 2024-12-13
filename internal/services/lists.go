@@ -4,20 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"meso/db"
+	"meso/internal/utils"
 	"net/http"
-
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func GetAllLists(w http.ResponseWriter, r *http.Request) {
-	pool, ok := r.Context().Value("pool").(*pgxpool.Pool)
-	if !ok {
-		http.Error(w, "Database connection not available", http.StatusInternalServerError)
-		return
-	}
-
-	queries := db.New(pool)
-	ctx := r.Context()
+	queries, ctx := utils.GetDBCtx(w, r)
 
 	lists, err := queries.GetAllLists(ctx)
 	if err != nil {
@@ -31,6 +23,33 @@ func GetAllLists(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
+}
+
+func CreateList(w http.ResponseWriter, r *http.Request) {
+	queries, ctx := utils.GetDBCtx(w, r)
+
+	var list db.CreateListParams
+
+	err := json.NewDecoder(r.Body).Decode(&list)
+	if err != nil {
+		fmt.Println("Error decoding JSON:", err)
+		return
+	}
+
+	createdList, err := queries.CreateList(ctx, list)
+	if err != nil {
+		fmt.Println("Error creating list:", err)
+		return
+	}
+
+	jsonData, err := json.Marshal(createdList)
+	if err != nil {
+		fmt.Println("Error marshaling list to JSON:", err)
+	}
+
+	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonData)
 }

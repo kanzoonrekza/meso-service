@@ -32,6 +32,7 @@ func main() {
 	mux.HandleFunc("/status", services.Status)
 	mux.HandleFunc("GET /tasks", services.GetAllTasks)
 	mux.HandleFunc("GET /lists", services.GetAllLists)
+	mux.HandleFunc("POST /lists", services.CreateList)
 
 	server.ListenAndServe()
 }
