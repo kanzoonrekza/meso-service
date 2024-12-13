@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func Status(w http.ResponseWriter, r *http.Request) {
+func StatusHandler(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"service": "Meso",
 		"status":  "OK",

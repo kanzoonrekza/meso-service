@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func GetAllTasks(w http.ResponseWriter, r *http.Request) {
+func GetAllTasksHandler(w http.ResponseWriter, r *http.Request) {
 	queries, ctx := utils.GetDBCtx(w, r)
 
 	tasks, err := queries.GetAllTasks(ctx)

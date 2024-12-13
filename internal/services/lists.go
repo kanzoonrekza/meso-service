@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-func GetAllLists(w http.ResponseWriter, r *http.Request) {
+func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 	queries, ctx := utils.GetDBCtx(w, r)
 
 	lists, err := queries.GetAllLists(ctx)
@@ -28,7 +28,7 @@ func GetAllLists(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-func GetListByID(w http.ResponseWriter, r *http.Request) {
+func GetListByIDHandler(w http.ResponseWriter, r *http.Request) {
 	queries, ctx := utils.GetDBCtx(w, r)
 
 	id, err := strconv.Atoi(r.PathValue("id"))
@@ -53,7 +53,7 @@ func GetListByID(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-func CreateList(w http.ResponseWriter, r *http.Request) {
+func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 	queries, ctx := utils.GetDBCtx(w, r)
 
 	var list db.CreateListParams
@@ -80,7 +80,7 @@ func CreateList(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-func DeleteList(w http.ResponseWriter, r *http.Request) {
+func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	queries, ctx := utils.GetDBCtx(w, r)
 
 	id, err := strconv.Atoi(r.PathValue("id"))

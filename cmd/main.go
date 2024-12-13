@@ -29,14 +29,14 @@ func main() {
 		Handler: middleware.DBPoolHandler(pool)(mux),
 	}
 
-	mux.HandleFunc("/status", services.Status)
+	mux.HandleFunc("/status", services.StatusHandler)
 
-	mux.HandleFunc("GET /lists", services.GetAllLists)
-	mux.HandleFunc("GET /lists/{id}", services.GetListByID)
-	mux.HandleFunc("POST /lists", services.CreateList)
-	mux.HandleFunc("DELETE /lists/{id}", services.DeleteList)
-	
-	mux.HandleFunc("GET /tasks", services.GetAllTasks)
+	mux.HandleFunc("GET /lists", services.GetAllListsHandler)
+	mux.HandleFunc("GET /lists/{id}", services.GetListByIDHandler)
+	mux.HandleFunc("POST /lists", services.CreateListHandler)
+	mux.HandleFunc("DELETE /lists/{id}", services.DeleteListHandler)
+
+	mux.HandleFunc("GET /tasks", services.GetAllTasksHandler)
 
 	server.ListenAndServe()
 }
