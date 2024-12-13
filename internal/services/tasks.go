@@ -16,12 +16,7 @@ func GetAllTasksHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonData, err := json.Marshal(tasks)
-	if err != nil {
-		fmt.Println("Error marshaling tasks to JSON:", err)
-	}
-
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonData)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(tasks)
 }

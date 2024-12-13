@@ -18,14 +18,10 @@ func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonData, err := json.Marshal(lists)
-	if err != nil {
-		fmt.Println("Error marshaling lists to JSON:", err)
-	}
-
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonData)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(lists)
+
 }
 
 func GetListByIDHandler(w http.ResponseWriter, r *http.Request) {
@@ -43,14 +39,9 @@ func GetListByIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonData, err := json.Marshal(list)
-	if err != nil {
-		fmt.Println("Error marshaling list to JSON:", err)
-	}
-
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonData)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(list)
 }
 
 func CreateListHandler(w http.ResponseWriter, r *http.Request) {
@@ -70,14 +61,10 @@ func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonData, err := json.Marshal(createdList)
-	if err != nil {
-		fmt.Println("Error marshaling list to JSON:", err)
-	}
-
-	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonData)
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(createdList)
+
 }
 
 func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
@@ -101,12 +88,7 @@ func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 		"message": "Delete success",
 	}
 
-	jsonData, err := json.Marshal(response)
-	if err != nil {
-		fmt.Println("Error marshaling list to JSON:", err)
-	}
-
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonData)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
