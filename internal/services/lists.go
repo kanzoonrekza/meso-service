@@ -6,6 +6,7 @@ import (
 	"meso/db"
 	"meso/internal/utils"
 	"net/http"
+	"strconv"
 )
 
 func GetAllLists(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +51,37 @@ func CreateList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
+}
+
+func DeleteList(w http.ResponseWriter, r *http.Request) {
+	queries, ctx := utils.GetDBCtx(w, r)
+
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		fmt.Println("Error getting ID from request:", err)
+		return
+	}
+
+	// TODO: Find the list with that id first before executing the deletion
+
+	err = queries.DeleteList(ctx, int64(id))
+	if err != nil {
+		fmt.Println("Error deleting list:", err)
+		return
+	}
+
+	response := map[string]interface{}{
+		"message": "Delete success",
+	}
+
+	jsonData, err := json.Marshal(response)
+	if err != nil {
+		fmt.Println("Error marshaling list to JSON:", err)
+	}
+
+	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonData)
 }

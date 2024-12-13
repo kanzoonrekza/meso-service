@@ -33,6 +33,7 @@ func main() {
 	mux.HandleFunc("GET /tasks", services.GetAllTasks)
 	mux.HandleFunc("GET /lists", services.GetAllLists)
 	mux.HandleFunc("POST /lists", services.CreateList)
+	mux.HandleFunc("DELETE /lists/{id}", services.DeleteList)
 
 	server.ListenAndServe()
 }
