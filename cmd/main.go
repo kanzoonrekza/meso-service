@@ -30,10 +30,13 @@ func main() {
 	}
 
 	mux.HandleFunc("/status", services.Status)
-	mux.HandleFunc("GET /tasks", services.GetAllTasks)
+
 	mux.HandleFunc("GET /lists", services.GetAllLists)
+	mux.HandleFunc("GET /lists/{id}", services.GetListByID)
 	mux.HandleFunc("POST /lists", services.CreateList)
 	mux.HandleFunc("DELETE /lists/{id}", services.DeleteList)
+	
+	mux.HandleFunc("GET /tasks", services.GetAllTasks)
 
 	server.ListenAndServe()
 }

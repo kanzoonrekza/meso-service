@@ -1,6 +1,9 @@
 -- name: GetAllLists :many
 SELECT * FROM lists;
 
+-- name: GetListByID :one
+SELECT * FROM lists WHERE id = $1;
+
 -- name: CreateList :one
 INSERT INTO lists (title, description) VALUES ($1, $2) RETURNING *;
 

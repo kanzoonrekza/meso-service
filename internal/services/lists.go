@@ -28,6 +28,31 @@ func GetAllLists(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
+func GetListByID(w http.ResponseWriter, r *http.Request) {
+	queries, ctx := utils.GetDBCtx(w, r)
+
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		fmt.Println("Error getting ID from request:", err)
+		return
+	}
+
+	list, err := queries.GetListByID(ctx, int64(id))
+	if err != nil {
+		fmt.Println("Error getting list:", err)
+		return
+	}
+
+	jsonData, err := json.Marshal(list)
+	if err != nil {
+		fmt.Println("Error marshaling list to JSON:", err)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
+}
+
 func CreateList(w http.ResponseWriter, r *http.Request) {
 	queries, ctx := utils.GetDBCtx(w, r)
 

@@ -69,3 +69,19 @@ func (q *Queries) GetAllLists(ctx context.Context) ([]List, error) {
 	}
 	return items, nil
 }
+
+const getListByID = `-- name: GetListByID :one
+SELECT id, title, description, created_at FROM lists WHERE id = $1
+`
+
+func (q *Queries) GetListByID(ctx context.Context, id int64) (List, error) {
+	row := q.db.QueryRow(ctx, getListByID, id)
+	var i List
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.CreatedAt,
+	)
+	return i, err
+}
