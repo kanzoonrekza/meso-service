@@ -92,3 +92,26 @@ func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
+
+func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
+	queries, ctx := utils.GetDBCtx(w, r)
+
+	var list db.UpdateListParams
+
+	err := json.NewDecoder(r.Body).Decode(&list)
+	fmt.Println(list)
+	if err != nil {
+		fmt.Println("Error decoding JSON:", err)
+		return
+	}
+
+	updatedList, err := queries.UpdateList(ctx, list)
+	if err != nil {
+		fmt.Println("Error updating list:", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(updatedList)
+}

@@ -85,3 +85,25 @@ func (q *Queries) GetListByID(ctx context.Context, id int64) (List, error) {
 	)
 	return i, err
 }
+
+const updateList = `-- name: UpdateList :one
+UPDATE lists SET title = COALESCE($1, title), description = COALESCE($2, description) WHERE id = $3 RETURNING id, title, description, created_at
+`
+
+type UpdateListParams struct {
+	Title       string      `json:"title"`
+	Description pgtype.Text `json:"description"`
+	ID          int64       `json:"id"`
+}
+
+func (q *Queries) UpdateList(ctx context.Context, arg UpdateListParams) (List, error) {
+	row := q.db.QueryRow(ctx, updateList, arg.Title, arg.Description, arg.ID)
+	var i List
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.CreatedAt,
+	)
+	return i, err
+}
