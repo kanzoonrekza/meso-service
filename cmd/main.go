@@ -31,13 +31,18 @@ func main() {
 
 	mux.HandleFunc("/status", services.StatusHandler)
 
+	mux.HandleFunc("POST /lists", services.CreateListHandler)
+	mux.HandleFunc("PATCH /lists", services.UpdateListHandler)
+	mux.HandleFunc("DELETE /lists/{id}", services.DeleteListHandler)
 	mux.HandleFunc("GET /lists", services.GetAllListsHandler)
 	mux.HandleFunc("GET /lists/{id}", services.GetListByIDHandler)
-	mux.HandleFunc("POST /lists", services.CreateListHandler)
-	mux.HandleFunc("PUT /lists", services.UpdateListHandler)
-	mux.HandleFunc("DELETE /lists/{id}", services.DeleteListHandler)
 
+	mux.HandleFunc("POST /tasks", services.CreateTaskHandler)
+	mux.HandleFunc("PATCH /tasks", services.UpdateTaskHandler)
+	mux.HandleFunc("DELETE /tasks/{id}", services.DeleteTaskHandler)
 	mux.HandleFunc("GET /tasks", services.GetAllTasksHandler)
+	mux.HandleFunc("GET /tasks/{id}", services.GetTaskDetailsHandler)
+	mux.HandleFunc("GET /lists/{id}/tasks", services.GetTasksByParentListIDHandler)
 
 	server.ListenAndServe()
 }

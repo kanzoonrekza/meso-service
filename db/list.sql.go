@@ -12,7 +12,9 @@ import (
 )
 
 const createList = `-- name: CreateList :one
-INSERT INTO lists (title, description) VALUES ($1, $2) RETURNING id, title, description, created_at
+INSERT INTO lists (title, description)
+VALUES ($1, $2)
+RETURNING id, title, description, created_at
 `
 
 type CreateListParams struct {
@@ -33,7 +35,8 @@ func (q *Queries) CreateList(ctx context.Context, arg CreateListParams) (List, e
 }
 
 const deleteList = `-- name: DeleteList :exec
-DELETE FROM lists WHERE id = $1
+DELETE FROM lists
+WHERE id = $1
 `
 
 func (q *Queries) DeleteList(ctx context.Context, id int64) error {
@@ -42,7 +45,8 @@ func (q *Queries) DeleteList(ctx context.Context, id int64) error {
 }
 
 const getAllLists = `-- name: GetAllLists :many
-SELECT id, title, description, created_at FROM lists
+SELECT id, title, description, created_at
+FROM lists
 `
 
 func (q *Queries) GetAllLists(ctx context.Context) ([]List, error) {
@@ -51,7 +55,7 @@ func (q *Queries) GetAllLists(ctx context.Context) ([]List, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []List
+	items := []List{}
 	for rows.Next() {
 		var i List
 		if err := rows.Scan(
@@ -71,7 +75,9 @@ func (q *Queries) GetAllLists(ctx context.Context) ([]List, error) {
 }
 
 const getListByID = `-- name: GetListByID :one
-SELECT id, title, description, created_at FROM lists WHERE id = $1
+SELECT id, title, description, created_at
+FROM lists
+WHERE id = $1
 `
 
 func (q *Queries) GetListByID(ctx context.Context, id int64) (List, error) {
@@ -87,11 +93,15 @@ func (q *Queries) GetListByID(ctx context.Context, id int64) (List, error) {
 }
 
 const updateList = `-- name: UpdateList :one
-UPDATE lists SET title = COALESCE($1, title), description = COALESCE($2, description) WHERE id = $3 RETURNING id, title, description, created_at
+UPDATE lists
+SET title = COALESCE($1, title),
+    description = $2
+WHERE id = $3
+RETURNING id, title, description, created_at
 `
 
 type UpdateListParams struct {
-	Title       string      `json:"title"`
+	Title       pgtype.Text `json:"title"`
 	Description pgtype.Text `json:"description"`
 	ID          int64       `json:"id"`
 }
