@@ -40,6 +40,10 @@ goose:
 			echo "🪃 Roll back database by one..."; \
 			goose -dir $$dir $$db_url down; \
 			;; \
+		reset) \
+			echo "🔄 Reset database..."; \
+			goose -dir $$dir $$db_url reset; \
+			;; \
 		*) \
 			echo "❌️ Unknown command: make goose $$cmd"; \
 	esac

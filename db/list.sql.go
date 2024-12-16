@@ -34,14 +34,17 @@ func (q *Queries) CreateList(ctx context.Context, arg CreateListParams) (List, e
 	return i, err
 }
 
-const deleteList = `-- name: DeleteList :exec
+const deleteList = `-- name: DeleteList :execrows
 DELETE FROM lists
 WHERE id = $1
 `
 
-func (q *Queries) DeleteList(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, deleteList, id)
-	return err
+func (q *Queries) DeleteList(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteList, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getAllLists = `-- name: GetAllLists :many

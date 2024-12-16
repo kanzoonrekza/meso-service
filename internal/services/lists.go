@@ -1,84 +1,81 @@
 package services
 
 import (
-	"encoding/json"
+	"database/sql"
+	"errors"
 	"fmt"
 	"meso/db"
 	"meso/internal/utils"
 	"net/http"
-	"strconv"
 )
 
 func CreateListHandler(w http.ResponseWriter, r *http.Request) {
 	queries, ctx := utils.GetDBCtx(w, r)
 
 	var list db.CreateListParams
-
-	err := json.NewDecoder(r.Body).Decode(&list)
-	if err != nil {
-		fmt.Println("Error decoding JSON:", err)
+	if !utils.GetDecodedJSON(w, r.Body, &list) {
 		return
 	}
 
 	createdList, err := queries.CreateList(ctx, list)
 	if err != nil {
 		fmt.Println("Error creating list:", err)
+		utils.CreateJSONResponse(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(createdList)
-
+	utils.CreateJSONResponse(w, http.StatusCreated, createdList)
 }
 
 func UpdateListHandler(w http.ResponseWriter, r *http.Request) {
 	queries, ctx := utils.GetDBCtx(w, r)
 
-	var list db.UpdateListParams
-
-	err := json.NewDecoder(r.Body).Decode(&list)
-	fmt.Println(list)
-	if err != nil {
-		fmt.Println("Error decoding JSON:", err)
+	var id int
+	if !utils.GetPathParamAsNumber(w, r, "id", &id) {
 		return
 	}
+
+	var list db.UpdateListParams
+	if !utils.GetDecodedJSON(w, r.Body, &list) {
+		return
+	}
+	list.ID = int64(id)
 
 	updatedList, err := queries.UpdateList(ctx, list)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			fmt.Println("Error list not found:", err)
+			utils.CreateJSONResponse(w, http.StatusNotFound, "List not found")
+			return
+		}
 		fmt.Println("Error updating list:", err)
+		utils.CreateJSONResponse(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(updatedList)
+	utils.CreateJSONResponse(w, http.StatusOK, updatedList)
 }
 
 func DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	queries, ctx := utils.GetDBCtx(w, r)
 
-	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil {
-		fmt.Println("Error getting ID from request:", err)
+	var id int
+	if !utils.GetPathParamAsNumber(w, r, "id", &id) {
 		return
 	}
 
-	// TODO: Find the list with that id first before executing the deletion
-
-	err = queries.DeleteList(ctx, int64(id))
+	rows, err := queries.DeleteList(ctx, int64(id))
 	if err != nil {
 		fmt.Println("Error deleting list:", err)
+		utils.CreateJSONResponse(w, http.StatusInternalServerError, err)
+		return
+	}
+	if rows == 0 {
+		utils.CreateJSONResponse(w, http.StatusNotFound, "List not found")
 		return
 	}
 
-	response := map[string]interface{}{
-		"message": "Delete success",
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	utils.CreateJSONResponse(w, http.StatusOK, "Delete successful")
 }
 
 func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
@@ -87,31 +84,32 @@ func GetAllListsHandler(w http.ResponseWriter, r *http.Request) {
 	lists, err := queries.GetAllLists(ctx)
 	if err != nil {
 		fmt.Println("Error getting lists:", err)
+		utils.CreateJSONResponse(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(lists)
-
+	utils.CreateJSONResponse(w, http.StatusOK, lists)
 }
 
 func GetListByIDHandler(w http.ResponseWriter, r *http.Request) {
 	queries, ctx := utils.GetDBCtx(w, r)
 
-	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil {
-		fmt.Println("Error getting ID from request:", err)
+	var id int
+	if !utils.GetPathParamAsNumber(w, r, "id", &id) {
 		return
 	}
 
 	list, err := queries.GetListByID(ctx, int64(id))
 	if err != nil {
-		fmt.Println("Error getting list:", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			fmt.Println("Error list not found:", err)
+			utils.CreateJSONResponse(w, http.StatusNotFound, "List not found")
+			return
+		}
+		fmt.Println("Error getting list:", err.Error())
+		utils.CreateJSONResponse(w, http.StatusNotFound, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(list)
+	utils.CreateJSONResponse(w, http.StatusOK, list)
 }

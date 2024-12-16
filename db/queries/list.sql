@@ -10,7 +10,7 @@ SET title = COALESCE(sqlc.narg('title'), title),
 WHERE id = sqlc.arg('id')
 RETURNING *;
 
--- name: DeleteList :exec
+-- name: DeleteList :execrows
 DELETE FROM lists
 WHERE id = sqlc.arg('id');
 
