@@ -104,6 +104,25 @@ func (q *Queries) GetAllTasks(ctx context.Context) ([]Task, error) {
 	return items, nil
 }
 
+const getParentTaskData = `-- name: GetParentTaskData :one
+SELECT id,
+    parent_task_id
+FROM tasks
+WHERE id = $1
+`
+
+type GetParentTaskDataRow struct {
+	ID           int64       `json:"id"`
+	ParentTaskID pgtype.Int8 `json:"parent_task_id"`
+}
+
+func (q *Queries) GetParentTaskData(ctx context.Context, id int64) (GetParentTaskDataRow, error) {
+	row := q.db.QueryRow(ctx, getParentTaskData, id)
+	var i GetParentTaskDataRow
+	err := row.Scan(&i.ID, &i.ParentTaskID)
+	return i, err
+}
+
 const getTaskByID = `-- name: GetTaskByID :one
 SELECT id, title, description, is_done, parent_list_id, parent_task_id, created_at
 FROM tasks

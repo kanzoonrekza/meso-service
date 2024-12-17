@@ -19,6 +19,24 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	pTask, err := queries.GetParentTaskData(ctx, task.ParentTaskID.Int64)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			fmt.Println("Error parent task not found")
+			utils.CreateJSONResponse(w, http.StatusNotFound, "Parent task not found")
+			return
+		}
+		fmt.Println("Error checking parent task:", err)
+		utils.CreateJSONResponse(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if pTask.ParentTaskID.Valid {
+		fmt.Println("Error parent task is a subtask")
+		utils.CreateJSONResponse(w, http.StatusBadRequest, "Parent task is a subtask")
+		return
+	}
+
 	createdTask, err := queries.CreateTask(ctx, task)
 	if err != nil {
 		fmt.Println("Error creating task:", err)

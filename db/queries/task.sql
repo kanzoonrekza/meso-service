@@ -47,3 +47,9 @@ WHERE parent_list_id = sqlc.arg('id');
 SELECT *
 FROM tasks
 WHERE parent_task_id = sqlc.arg('id');
+
+-- name: GetParentTaskData :one
+SELECT id,
+    parent_task_id
+FROM tasks
+WHERE id = sqlc.arg('id');
