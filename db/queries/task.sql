@@ -25,7 +25,7 @@ SET title = COALESCE(sqlc.narg('title'), title),
 WHERE id = sqlc.arg('id')
 RETURNING *;
 
--- name: DeleteTask :exec
+-- name: DeleteTask :execrows
 DELETE FROM tasks
 WHERE id = sqlc.arg('id');
 

@@ -1,12 +1,12 @@
 package services
 
 import (
-	"encoding/json"
+	"database/sql"
+	"errors"
 	"fmt"
 	"meso/db"
 	"meso/internal/utils"
 	"net/http"
-	"strconv"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -15,72 +15,69 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	queries, ctx := utils.GetDBCtx(w, r)
 
 	var task db.CreateTaskParams
-
-	err := json.NewDecoder(r.Body).Decode(&task)
-	if err != nil {
-		fmt.Println("Error decoding JSON:", err)
+	if !utils.GetDecodedJSON(w, r.Body, &task) {
 		return
 	}
 
 	createdTask, err := queries.CreateTask(ctx, task)
 	if err != nil {
 		fmt.Println("Error creating task:", err)
+		utils.CreateJSONResponse(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(createdTask)
+	utils.CreateJSONResponse(w, http.StatusCreated, createdTask)
 }
 
 func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	queries, ctx := utils.GetDBCtx(w, r)
 
-	// var task map[string]interface{}
-	var task db.UpdateTaskParams
-
-	err := json.NewDecoder(r.Body).Decode(&task)
-	if err != nil {
-		fmt.Println("Error decoding JSON task:", err)
+	var id int
+	if !utils.GetPathParamAsNumber(w, r, "id", &id) {
 		return
 	}
-	fmt.Println(task)
+
+	var task db.UpdateTaskParams
+	if !utils.GetDecodedJSON(w, r.Body, &task) {
+		return
+	}
+	task.ID = int64(id)
 
 	updatedTask, err := queries.UpdateTask(ctx, task)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			fmt.Println("Error task not found:", err)
+			utils.CreateJSONResponse(w, http.StatusNotFound, "Task not found")
+			return
+		}
 		fmt.Println("Error updating task:", err)
+		utils.CreateJSONResponse(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(updatedTask)
+	utils.CreateJSONResponse(w, http.StatusOK, updatedTask)
 }
 
 func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	queries, ctx := utils.GetDBCtx(w, r)
 
-	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil {
-		fmt.Println("Error getting ID from request:", err)
+	var id int
+	if !utils.GetPathParamAsNumber(w, r, "id", &id) {
 		return
 	}
 
-	// TODO: Find the task with that id first before executing the deletion
-
-	err = queries.DeleteTask(ctx, int64(id))
+	rows, err := queries.DeleteTask(ctx, int64(id))
 	if err != nil {
 		fmt.Println("Error deleting task:", err)
+		utils.CreateJSONResponse(w, http.StatusInternalServerError, err)
+		return
+	}
+	if rows == 0 {
+		utils.CreateJSONResponse(w, http.StatusNotFound, "Task not found")
 		return
 	}
 
-	response := map[string]interface{}{
-		"message": "Delete success",
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	utils.CreateJSONResponse(w, http.StatusOK, "Delete successful")
 }
 
 func GetAllTasksHandler(w http.ResponseWriter, r *http.Request) {
@@ -92,47 +89,69 @@ func GetAllTasksHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(tasks)
+	utils.CreateJSONResponse(w, http.StatusOK, tasks)
 }
 
+// TODO
 func GetTaskDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	queries, ctx := utils.GetDBCtx(w, r)
 
-	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil {
-		fmt.Println("Error getting ID from request:", err)
+	var id int
+	if !utils.GetPathParamAsNumber(w, r, "id", &id) {
 		return
 	}
 
-	task, err := queries.GetTaskByID(ctx, int64(id))
+	pTask, err := queries.GetTaskByID(ctx, int64(id))
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			utils.CreateJSONResponse(w, http.StatusNotFound, "Task not found")
+			return
+		}
 		fmt.Println("Error getting task:", err)
+		utils.CreateJSONResponse(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(task)
+	sTasks, err := queries.GetTasksByParentTaskID(ctx, pgtype.Int8{Int64: int64(id), Valid: true})
+	if err != nil {
+		fmt.Println("Error getting subtasks:", err)
+		utils.CreateJSONResponse(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	response := db.TaskWithSubtasks{
+		Task:     pTask,
+		Subtasks: sTasks,
+	}
+
+	utils.CreateJSONResponse(w, http.StatusOK, response)
 }
 
 func GetTasksByParentListIDHandler(w http.ResponseWriter, r *http.Request) {
 	queries, ctx := utils.GetDBCtx(w, r)
 
-	id, err := strconv.Atoi(r.PathValue("id"))
+	var id int
+	if !utils.GetPathParamAsNumber(w, r, "id", &id) {
+		return
+	}
+
+	list, err := queries.GetListExistanceByID(ctx, int64(id))
 	if err != nil {
-		fmt.Println("Error getting ID from request:", err)
+		fmt.Println("Error getting list:", err)
+		utils.CreateJSONResponse(w, http.StatusInternalServerError, err)
+		return
+	}
+	if !list {
+		utils.CreateJSONResponse(w, http.StatusNotFound, "List not found")
 		return
 	}
 
 	tasks, err := queries.GetTasksByParentListID(ctx, pgtype.Int8{Int64: int64(id), Valid: true})
 	if err != nil {
 		fmt.Println("Error getting tasks:", err)
+		utils.CreateJSONResponse(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(tasks)
+	utils.CreateJSONResponse(w, http.StatusOK, tasks)
 }

@@ -95,6 +95,21 @@ func (q *Queries) GetListByID(ctx context.Context, id int64) (List, error) {
 	return i, err
 }
 
+const getListExistanceByID = `-- name: GetListExistanceByID :one
+SELECT EXISTS(
+        SELECT 1
+        FROM lists
+        WHERE id = $1
+    )
+`
+
+func (q *Queries) GetListExistanceByID(ctx context.Context, id int64) (bool, error) {
+	row := q.db.QueryRow(ctx, getListExistanceByID, id)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const updateList = `-- name: UpdateList :one
 UPDATE lists
 SET title = COALESCE($1, title),

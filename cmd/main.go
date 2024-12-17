@@ -38,7 +38,7 @@ func main() {
 	mux.HandleFunc("GET /lists/{id}", services.GetListByIDHandler)
 
 	mux.HandleFunc("POST /tasks", services.CreateTaskHandler)
-	mux.HandleFunc("PATCH /tasks", services.UpdateTaskHandler)
+	mux.HandleFunc("PATCH /tasks/{id}", services.UpdateTaskHandler)
 	mux.HandleFunc("DELETE /tasks/{id}", services.DeleteTaskHandler)
 	mux.HandleFunc("GET /tasks", services.GetAllTasksHandler)
 	mux.HandleFunc("GET /tasks/{id}", services.GetTaskDetailsHandler)

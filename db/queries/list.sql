@@ -22,3 +22,10 @@ FROM lists;
 SELECT *
 FROM lists
 WHERE id = sqlc.arg('id');
+
+-- name: GetListExistanceByID :one
+SELECT EXISTS(
+        SELECT 1
+        FROM lists
+        WHERE id = sqlc.arg('id')
+    );
