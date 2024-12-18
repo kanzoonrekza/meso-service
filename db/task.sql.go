@@ -16,6 +16,8 @@ INSERT INTO tasks (
         title,
         description,
         is_done,
+        due_date,
+        priority,
         parent_list_id,
         parent_task_id
     )
@@ -24,17 +26,21 @@ VALUES (
         $2,
         COALESCE($3, false),
         $4,
-        $5
+        COALESCE($5, 0),
+        $6,
+        $7
     )
-RETURNING id, title, description, is_done, parent_list_id, parent_task_id, created_at
+RETURNING id, title, description, is_done, due_date, priority, parent_list_id, parent_task_id, created_at
 `
 
 type CreateTaskParams struct {
-	Title        string      `json:"title"`
-	Description  pgtype.Text `json:"description"`
-	IsDone       interface{} `json:"is_done"`
-	ParentListID pgtype.Int8 `json:"parent_list_id"`
-	ParentTaskID pgtype.Int8 `json:"parent_task_id"`
+	Title        string           `json:"title"`
+	Description  pgtype.Text      `json:"description"`
+	IsDone       interface{}      `json:"is_done"`
+	DueDate      pgtype.Timestamp `json:"due_date"`
+	Priority     interface{}      `json:"priority"`
+	ParentListID pgtype.Int8      `json:"parent_list_id"`
+	ParentTaskID pgtype.Int8      `json:"parent_task_id"`
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error) {
@@ -42,6 +48,8 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		arg.Title,
 		arg.Description,
 		arg.IsDone,
+		arg.DueDate,
+		arg.Priority,
 		arg.ParentListID,
 		arg.ParentTaskID,
 	)
@@ -51,6 +59,8 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		&i.Title,
 		&i.Description,
 		&i.IsDone,
+		&i.DueDate,
+		&i.Priority,
 		&i.ParentListID,
 		&i.ParentTaskID,
 		&i.CreatedAt,
@@ -72,7 +82,7 @@ func (q *Queries) DeleteTask(ctx context.Context, id int64) (int64, error) {
 }
 
 const getAllTasks = `-- name: GetAllTasks :many
-SELECT id, title, description, is_done, parent_list_id, parent_task_id, created_at
+SELECT id, title, description, is_done, due_date, priority, parent_list_id, parent_task_id, created_at
 FROM tasks
 `
 
@@ -90,6 +100,8 @@ func (q *Queries) GetAllTasks(ctx context.Context) ([]Task, error) {
 			&i.Title,
 			&i.Description,
 			&i.IsDone,
+			&i.DueDate,
+			&i.Priority,
 			&i.ParentListID,
 			&i.ParentTaskID,
 			&i.CreatedAt,
@@ -124,7 +136,7 @@ func (q *Queries) GetParentTaskData(ctx context.Context, id int64) (GetParentTas
 }
 
 const getTaskByID = `-- name: GetTaskByID :one
-SELECT id, title, description, is_done, parent_list_id, parent_task_id, created_at
+SELECT id, title, description, is_done, due_date, priority, parent_list_id, parent_task_id, created_at
 FROM tasks
 WHERE id = $1
 `
@@ -137,6 +149,8 @@ func (q *Queries) GetTaskByID(ctx context.Context, id int64) (Task, error) {
 		&i.Title,
 		&i.Description,
 		&i.IsDone,
+		&i.DueDate,
+		&i.Priority,
 		&i.ParentListID,
 		&i.ParentTaskID,
 		&i.CreatedAt,
@@ -145,7 +159,7 @@ func (q *Queries) GetTaskByID(ctx context.Context, id int64) (Task, error) {
 }
 
 const getTasksByParentListID = `-- name: GetTasksByParentListID :many
-SELECT id, title, description, is_done, parent_list_id, parent_task_id, created_at
+SELECT id, title, description, is_done, due_date, priority, parent_list_id, parent_task_id, created_at
 FROM tasks
 WHERE parent_list_id = $1
 `
@@ -164,6 +178,8 @@ func (q *Queries) GetTasksByParentListID(ctx context.Context, id pgtype.Int8) ([
 			&i.Title,
 			&i.Description,
 			&i.IsDone,
+			&i.DueDate,
+			&i.Priority,
 			&i.ParentListID,
 			&i.ParentTaskID,
 			&i.CreatedAt,
@@ -179,7 +195,7 @@ func (q *Queries) GetTasksByParentListID(ctx context.Context, id pgtype.Int8) ([
 }
 
 const getTasksByParentTaskID = `-- name: GetTasksByParentTaskID :many
-SELECT id, title, description, is_done, parent_list_id, parent_task_id, created_at
+SELECT id, title, description, is_done, due_date, priority, parent_list_id, parent_task_id, created_at
 FROM tasks
 WHERE parent_task_id = $1
 `
@@ -198,6 +214,8 @@ func (q *Queries) GetTasksByParentTaskID(ctx context.Context, id pgtype.Int8) ([
 			&i.Title,
 			&i.Description,
 			&i.IsDone,
+			&i.DueDate,
+			&i.Priority,
 			&i.ParentListID,
 			&i.ParentTaskID,
 			&i.CreatedAt,
@@ -217,19 +235,23 @@ UPDATE tasks
 SET title = COALESCE($1, title),
     description = $2,
     is_done = COALESCE($3, is_done),
-    parent_list_id = $4,
-    parent_task_id = $5
-WHERE id = $6
-RETURNING id, title, description, is_done, parent_list_id, parent_task_id, created_at
+    due_date = $4,
+    priority = COALESCE($5, priority),
+    parent_list_id = $6,
+    parent_task_id = $7
+WHERE id = $8
+RETURNING id, title, description, is_done, due_date, priority, parent_list_id, parent_task_id, created_at
 `
 
 type UpdateTaskParams struct {
-	Title        pgtype.Text `json:"title"`
-	Description  pgtype.Text `json:"description"`
-	IsDone       pgtype.Bool `json:"is_done"`
-	ParentListID pgtype.Int8 `json:"parent_list_id"`
-	ParentTaskID pgtype.Int8 `json:"parent_task_id"`
-	ID           int64       `json:"id"`
+	Title        pgtype.Text      `json:"title"`
+	Description  pgtype.Text      `json:"description"`
+	IsDone       pgtype.Bool      `json:"is_done"`
+	DueDate      pgtype.Timestamp `json:"due_date"`
+	Priority     pgtype.Int4      `json:"priority"`
+	ParentListID pgtype.Int8      `json:"parent_list_id"`
+	ParentTaskID pgtype.Int8      `json:"parent_task_id"`
+	ID           int64            `json:"id"`
 }
 
 func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, error) {
@@ -237,6 +259,8 @@ func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, e
 		arg.Title,
 		arg.Description,
 		arg.IsDone,
+		arg.DueDate,
+		arg.Priority,
 		arg.ParentListID,
 		arg.ParentTaskID,
 		arg.ID,
@@ -247,6 +271,8 @@ func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, e
 		&i.Title,
 		&i.Description,
 		&i.IsDone,
+		&i.DueDate,
+		&i.Priority,
 		&i.ParentListID,
 		&i.ParentTaskID,
 		&i.CreatedAt,

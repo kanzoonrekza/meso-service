@@ -20,6 +20,8 @@ type Task struct {
 	Title        string           `json:"title"`
 	Description  pgtype.Text      `json:"description"`
 	IsDone       bool             `json:"is_done"`
+	DueDate      pgtype.Timestamp `json:"due_date"`
+	Priority     int32            `json:"priority"`
 	ParentListID pgtype.Int8      `json:"parent_list_id"`
 	ParentTaskID pgtype.Int8      `json:"parent_task_id"`
 	CreatedAt    pgtype.Timestamp `json:"created_at"`
